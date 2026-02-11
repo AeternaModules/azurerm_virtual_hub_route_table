@@ -23,7 +23,7 @@ EOT
       destinations_type = string
       name              = string
       next_hop          = string
-      next_hop_type     = optional(string, "ResourceId")
+      next_hop_type     = optional(string) # Default: "ResourceId"
     }))
   }))
 }
