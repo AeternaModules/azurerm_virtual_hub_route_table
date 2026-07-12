@@ -6,7 +6,7 @@ resource "azurerm_virtual_hub_route_table" "virtual_hub_route_tables" {
   labels         = each.value.labels
 
   dynamic "route" {
-    for_each = each.value.route != null ? [each.value.route] : []
+    for_each = each.value.route != null ? each.value.route : []
     content {
       destinations      = route.value.destinations
       destinations_type = route.value.destinations_type

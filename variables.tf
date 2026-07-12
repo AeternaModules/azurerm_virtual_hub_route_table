@@ -18,46 +18,14 @@ EOT
     name           = string
     virtual_hub_id = string
     labels         = optional(set(string))
-    route = optional(object({
+    route = optional(list(object({
       destinations      = set(string)
       destinations_type = string
       name              = string
       next_hop          = string
       next_hop_type     = optional(string) # Default: "ResourceId"
-    }))
+    })))
   }))
-  validation {
-    condition = alltrue([
-      for k, v in var.virtual_hub_route_tables : (
-        v.route == null || (length(v.route.name) > 0)
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.virtual_hub_route_tables : (
-        v.route == null || (length(v.route.destinations) > 0)
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.virtual_hub_route_tables : (
-        v.route == null || (contains(["CIDR", "ResourceId", "Service"], v.route.destinations_type))
-      )
-    ])
-    error_message = "must be one of: CIDR, ResourceId, Service"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.virtual_hub_route_tables : (
-        v.route == null || (v.route.next_hop_type == null || (contains(["ResourceId"], v.route.next_hop_type)))
-      )
-    ])
-    error_message = "must be one of: ResourceId"
-  }
   # --- Unconfirmed validation candidates, derived from azurerm_virtual_hub_route_table's provider source ---
   # Not auto-enabled: either a bespoke provider validator we can't safely translate,
   # or a path that crosses a list-typed block (needs its own for_each wrapping).
@@ -68,9 +36,21 @@ EOT
   #   source:    [from virtualwans.ValidateVirtualHubID] !ok
   # path: virtual_hub_id
   #   source:    [from virtualwans.ValidateVirtualHubID] err != nil
+  # path: route.name
+  #   condition: length(value) > 0
+  #   message:   must not be empty
+  # path: route.destinations[*]
+  #   condition: length(value) > 0
+  #   message:   must not be empty
+  # path: route.destinations_type
+  #   condition: contains(["CIDR", "ResourceId", "Service"], value)
+  #   message:   must be one of: CIDR, ResourceId, Service
   # path: route.next_hop
   #   source:    [from azure.ValidateResourceID] !ok
   # path: route.next_hop
   #   source:    [from azure.ValidateResourceID] err != nil
+  # path: route.next_hop_type
+  #   condition: contains(["ResourceId"], value)
+  #   message:   must be one of: ResourceId
 }
 
