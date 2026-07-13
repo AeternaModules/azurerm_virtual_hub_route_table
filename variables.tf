@@ -23,7 +23,7 @@ EOT
       destinations_type = string
       name              = string
       next_hop          = string
-      next_hop_type     = optional(string) # Default: "ResourceId"
+      next_hop_type     = optional(string)
     })))
   }))
   # --- Unconfirmed validation candidates, derived from azurerm_virtual_hub_route_table's provider source ---
