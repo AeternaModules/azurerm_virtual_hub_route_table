@@ -26,31 +26,38 @@ EOT
       next_hop_type     = optional(string)
     })))
   }))
-  # --- Unconfirmed validation candidates, derived from azurerm_virtual_hub_route_table's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: name
-  #   source:    [from networkValidate.HubRouteTableName] !matched
-  # path: virtual_hub_id
-  #   source:    [from virtualwans.ValidateVirtualHubID] !ok
-  # path: virtual_hub_id
-  #   source:    [from virtualwans.ValidateVirtualHubID] err != nil
-  # path: route.name
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: route.destinations[*]
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: route.destinations_type
-  #   condition: contains(["CIDR", "ResourceId", "Service"], value)
-  #   message:   must be one of: CIDR, ResourceId, Service
-  # path: route.next_hop
-  #   source:    [from azure.ValidateResourceID] !ok
-  # path: route.next_hop
-  #   source:    [from azure.ValidateResourceID] err != nil
-  # path: route.next_hop_type
-  #   condition: contains(["ResourceId"], value)
-  #   message:   must be one of: ResourceId
+  validation {
+    condition = alltrue([
+      for k, v in var.virtual_hub_route_tables : (
+        v.route == null || alltrue([for item in v.route : (length(item.name) > 0)])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.virtual_hub_route_tables : (
+        v.route == null || alltrue([for item in v.route : (alltrue([for x in item.destinations : length(x) > 0]))])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.virtual_hub_route_tables : (
+        v.route == null || alltrue([for item in v.route : (contains(["CIDR", "ResourceId", "Service"], item.destinations_type))])
+      )
+    ])
+    error_message = "must be one of: CIDR, ResourceId, Service"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.virtual_hub_route_tables : (
+        v.route == null || alltrue([for item in v.route : (item.next_hop_type == null || (contains(["ResourceId"], item.next_hop_type)))])
+      )
+    ])
+    error_message = "must be one of: ResourceId"
+  }
+  # Note: 5 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
